@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export default function Home() {
   const [productos, setProductos] = useState([])
@@ -39,20 +40,17 @@ export default function Home() {
   useEffect(() => {
     let resultado = productos
 
-    // Filtro por busqueda
     if (busqueda.trim() !== '') {
       resultado = resultado.filter(producto =>
         producto.name.toLowerCase().includes(busqueda.toLowerCase())
       )
     }
 
-    // Filtro por estado
     if (filtroEstado !== 'todos') {
       const estadoValor = filtroEstado === 'activo' ? 1 : 0
       resultado = resultado.filter(producto => producto.state === estadoValor)
     }
 
-    // Filtro por control de stock
     if (filtroStock !== 'todos') {
       const stockValor = filtroStock === 'con-control' ? 1 : 0
       resultado = resultado.filter(producto => producto.stockControl === stockValor)
@@ -127,7 +125,6 @@ export default function Home() {
             <p>Pagina {page + 1} de {totalPages}</p>
           </div>
 
-          {/* Campo de busqueda */}
           <div className="relative">
             <input
               type="text"
@@ -146,7 +143,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Filtros */}
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -190,13 +186,12 @@ export default function Home() {
             )}
           </div>
 
-          {/* Resumen de filtros */}
           {hayFiltrosActivos && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-1">Filtros aplicados:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  {busqueda && <li>Busqueda: "{busqueda}"</li>}
+                  {busqueda && <li>Busqueda: &quot;{busqueda}&quot;</li>}
                   {filtroEstado !== 'todos' && <li>Estado: {filtroEstado === 'activo' ? 'Activos' : 'Inactivos'}</li>}
                   {filtroStock !== 'todos' && <li>Control de stock: {filtroStock === 'con-control' ? 'Con control' : 'Sin control'}</li>}
                 </ul>
@@ -224,9 +219,10 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
             {productosFiltrados.map((producto) => (
-              <div 
-                key={producto.id} 
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+              <Link 
+                key={producto.id}
+                href={`/producto/${producto.id}`}
+                className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow block cursor-pointer"
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-lg text-gray-900 flex-1">
@@ -255,20 +251,14 @@ export default function Home() {
                   </p>
                 </div>
 
-                <a 
-                  href={producto.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block text-blue-600 hover:text-blue-800"
-                >
+                <p className="mt-4 text-blue-600">
                   Ver detalles →
-                </a>
-              </div>
+                </p>
+              </Link>
             ))}
           </div>
         )}
 
-        {/* Controles de paginacion */}
         <div className="flex justify-center items-center gap-4 mt-8">
           <button
             onClick={irPrimeraPagina}
