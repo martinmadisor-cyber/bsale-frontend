@@ -5,6 +5,7 @@ import Link from 'next/link'
 export default function ProductoDetalle({ params }) {
   const [producto, setProducto] = useState(null)
   const [variantes, setVariantes] = useState([])
+  const [stocks, setStocks] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loadingVariantes, setLoadingVariantes] = useState(false)
@@ -29,20 +30,46 @@ export default function ProductoDetalle({ params }) {
       })
   }, [params.id])
 
-  const cargarVariantes = (productoId) => {
+  const cargarVariantes = async (productoId) => {
     setLoadingVariantes(true)
-    fetch(`https://bsale-proxy.vercel.app/api/bsale/products/${productoId}/variants.json`)
-      .then(response => response.json())
-      .then(data => {
+    try {
+      const response = await fetch(`https://bsale-proxy.vercel.app/api/bsale/products/${productoId}/variants.json`)
+      const data = await response.json()
+      
+      if (data.success && data.data.items) {
+        const variantesData = data.data.items
+        setVariantes(variantesData)
+        
+        // Cargar stock de cada variante
+        await cargarStocks(variantesData)
+      }
+    } catch (err) {
+      console.error('Error cargando variantes:', err)
+    }
+    setLoadingVariantes(false)
+  }
+
+  const cargarStocks = async (variantesData) => {
+    const stocksTemp = {}
+    
+    for (const variante of variantesData) {
+      try {
+        const response = await fetch(`https://bsale-proxy.vercel.app/api/bsale/stocks.json?variantid=${variante.id}`)
+        const data = await response.json()
+        
         if (data.success && data.data.items) {
-          setVariantes(data.data.items)
+          const stockTotal = data.data.items.reduce((total, stock) => {
+            return total + (stock.quantityAvailable || 0)
+          }, 0)
+          stocksTemp[variante.id] = stockTotal
         }
-        setLoadingVariantes(false)
-      })
-      .catch(err => {
-        console.error('Error cargando variantes:', err)
-        setLoadingVariantes(false)
-      })
+      } catch (err) {
+        console.error(`Error cargando stock de variante ${variante.id}:`, err)
+        stocksTemp[variante.id] = 0
+      }
+    }
+    
+    setStocks(stocksTemp)
   }
 
   const calcularStockTotal = () => {
@@ -51,9 +78,7 @@ export default function ProductoDetalle({ params }) {
     const hayStockIlimitado = variantes.some(v => v.unlimitedStock === 1)
     if (hayStockIlimitado) return 'Ilimitado'
     
-    const stockTotal = variantes.reduce((total, v) => {
-      return total + (v.quantityAvailable || 0)
-    }, 0)
+    const stockTotal = Object.values(stocks).reduce((total, stock) => total + stock, 0)
     
     return stockTotal
   }
@@ -180,50 +205,43 @@ export default function ProductoDetalle({ params }) {
             
             {loadingVariantes ? (
               <div className="text-center py-8 text-gray-500">
-                Cargando variantes...
+                Cargando variantes y stock...
               </div>
             ) : variantes.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {variantes.map((variante) => (
-                  <div 
-                    key={variante.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {variante.description || `Variante ${variante.id}`}
-                      </h3>
-                      {variante.unlimitedStock === 1 ? (
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-                          Stock Ilimitado
-                        </span>
-                      ) : (
-                        <span className={`px-2 py-1 text-xs rounded font-bold ${
-                          (variante.quantityAvailable || 0) > 10
-                            ? 'bg-green-100 text-green-800'
-                            : (variante.quantityAvailable || 0) > 0
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          Stock: {variante.quantityAvailable || 0}
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <p>Codigo: {variante.code || 'N/A'}</p>
-                      <p>Codigo de barras: {variante.barCode || 'N/A'}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No hay variantes disponibles
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                {variantes.map((variante) => {
+                  const stockVariante = stocks[variante.id] || 0
+                  
+                  return (
+                    <div 
+                      key={variante.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {variante.description || `Variante ${variante.id}`}
+                        </h3>
+                        {variante.unlimitedStock === 1 ? (
+                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                            Stock Ilimitado
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-1 text-xs rounded font-bold ${
+                            stockVariante > 10
+                              ? 'bg-green-100 text-green-800'
+                              : stockVariante > 0
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            Stock: {stockVariante}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>Codigo: {variante.code || 'N/A'}</p>
+                        <p>Codigo de barras: {variante.barCode || 'N/A'}</p>
+                        <p className={`font-medium ${
+                          variante.state === 1 ? 'text-green-600' : 'text-red-600'
     </div>
   )
 }
