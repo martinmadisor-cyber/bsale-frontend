@@ -114,9 +114,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">
-          Catalogo de Productos Bsale
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">
+            Catalogo de Productos Bsale
+          </h1>
+          <Link 
+            href="/documentos"
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+          >
+            Ver Documentos
+          </Link>
+        </div>
         
         <div className="mb-6 space-y-4">
           <div className="text-gray-600">
@@ -191,7 +199,7 @@ export default function Home() {
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-1">Filtros aplicados:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  {busqueda && <li>Busqueda: &quot;{busqueda}&quot;</li>}
+                  {busqueda && <li>Busqueda: {busqueda}</li>}
                   {filtroEstado !== 'todos' && <li>Estado: {filtroEstado === 'activo' ? 'Activos' : 'Inactivos'}</li>}
                   {filtroStock !== 'todos' && <li>Control de stock: {filtroStock === 'con-control' ? 'Con control' : 'Sin control'}</li>}
                 </ul>
