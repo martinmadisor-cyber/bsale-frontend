@@ -242,6 +242,22 @@ export default function ProductoDetalle({ params }) {
                         <p>Codigo de barras: {variante.barCode || 'N/A'}</p>
                         <p className={`font-medium ${
                           variante.state === 1 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          Estado: {variante.state === 1 ? 'Activo' : 'Inactivo'}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No hay variantes disponibles
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
